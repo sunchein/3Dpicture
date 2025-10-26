@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>香氛人格 藝術創作平台</title>
+    <style>
+        /* --- 基礎樣式 --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
+            margin: 0;
+            padding: 0;
+        }
+        h2, h3 {
+            border-bottom: 2px solid #444;
+            padding-bottom: 8px;
+            margin-top: 10px;
+        }
+        
+        /* --- 主內容包裝 (預設隱藏) --- */
+        #main-content {
+            display: none; /* 預設隱藏，直到訪客登錄 */
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        /* --- 訪客登錄彈窗 --- */
+        #user-info-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #user-info-form {
+            background-color: #1E1E1E;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            width: 400px;
+            max-width: 90%;
+        }
+        #user-info-form h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+        .form-field {
+            margin-bottom: 20px;
+        }
+        .form-field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #AAA;
+        }
+        .form-field input[type="text"],
+        .form-field input[type="tel"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: #E0E0E0;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        .form-field-radio {
+            display: flex;
+            gap: 20px;
+        }
+        .form-field-radio label {
+            color: #E0E0E0;
+            font-weight: normal;
+        }
+        #user-info-form button {
+            background-color: #0D6EFD;
+        }
+        #user-info-form button:hover {
+            background-color: #0A58CA;
+        }
+
+
+        /* --- 控制面板 --- */
+        #controls {
+            width: 400px;
+            min-width: 320px;
+            background-color: #1E1E1E;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+        .control-group { margin-bottom: 20px; }
+        .control-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #AAA;
+        }
+        select, input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: #E0E0E0;
+            box-sizing: border-box;
+        }
+        input[type="range"] { padding: 0; }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .slider-value {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #FFF;
+            min-width: 45px;
+            text-align: right;
+        }
+        
+        /* --- 按鈕樣式 --- */
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+        }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        #generate-btn { background-color: #0D6EFD; }
+        #generate-btn:hover:not(:disabled) { background-color: #0A58CA; }
+        #tools-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        #screenshot-btn {
+            grid-column: 1 / -1;
+            background-color: #198754;
+        }
+        #screenshot-btn:hover:not(:disabled) { background-color: #157347; }
+        #start-record-btn { background-color: #DC3545; }
+        #start-record-btn:hover:not(:disabled) { background-color: #BB2D3B; }
+        #stop-record-btn { background-color: #444; }
+        #stop-record-btn:hover:not(:disabled) { background-color: #333; }
+        .info-text {
+            font-size: 0.9rem;
+            color: #aaa;
+            background-color: #2a2a2a;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+        .info-text a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+        .info-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- 藝術畫布 --- */
+        #output-container {
+            width: 500px;
+            max-width: 90vw;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+        #art-canvas {
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            background-color: #000;
+            display: block;
+        }
+        
+        /* --- 洽詢表單樣式 --- */
+        #inquiry-form textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: #E0E0E0;
+            box-sizing: border-box;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        #inquiry-form button {
+            background-color: #ff6a00; /* 洽詢用橘色 */
+        }
+        #inquiry-form button:hover {
+            background-color: #e05c00;
+        }
+        #inquiry-form input[type="text"],
+        #inquiry-form input[type="tel"] {
+             width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: #E0E0E0;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="user-info-modal">
+        <form id="user-info-form" name="visitor-login" data-netlify="true">
+            <h2>香氛人格 藝術創作</h2>
+            <div class="form-field">
+                <label for="user-name">您的姓名</label>
+                <input type="text" id="user-name" name="user-name" required>
+            </div>
+            <div class="form-field">
+                <label for="user-phone">您的電話</label>
+                <input type="tel" id="user-phone" name="user-phone" required>
+            </div>
+            <div class="form-field">
+                <label>您的稱謂</label>
+                <div class="form-field-radio">
+                    <label><input type="radio" name="user-title" value="先生" checked> 先生</label>
+                    <label><input type="radio" name="user-title" value="小姐"> 小姐</label>
+                </div>
+            </div>
+            <button type="submit">開始創作</button>
+        </form>
+    </div>
+
+    <div id="main-content">
+        <div id="controls">
+            <h2>香氛人格設定</h2>
+            <div class="control-group">
+                <h3>前調 (Top Note)</h3>
+                <select id="select-top" class="personality-select"></select>
+                <div class="slider-container">
+                    <input type="range" id="slider-top" class="percentage-slider" min="0" max="100" value="34">
+                    <span id="value-top" class="slider-value">34%</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <h3>中調 (Middle Note)</h3>
+                <select id="select-mid" class="personality-select"></select>
+                <div class="slider-container">
+                    <input type="range" id="slider-mid" class="percentage-slider" min="0" max="100" value="33">
+                    <span id="value-mid" class="slider-value">33%</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <h3>後調 (Base Note)</h3>
+                <select id="select-base" class="personality-select"></select>
+                <div class="slider-container">
+                    <input type="range" id="slider-base" class="percentage-slider" min="0" max="100" value="33">
+                    <span id="value-base" class="slider-value">33%</span>
+                </div>
+            </div>
+            
+            <h2>全域參數</h2>
+            <div class="control-group">
+                <label for="slider-color">顏色強度 (Color Intensity)</label>
+                <input type="range" id="slider-color" min="50" max="200" value="100">
+            </div>
+            <div class="control-group">
+                <label for="slider-spray">噴霧濃度 (Spray Concentration)</label>
+                <input type="range" id="slider-spray" min="10" max="50" value="25">
+            </div>
+            <div class="control-group">
+                <label for="slider-halo">光暈強度 (Halo Intensity)</label>
+                <input type="range" id="slider-halo" min="0" max="100" value="30">
+            </div>
+            
+            <button id="generate-btn">重新生成粒子</button>
+            
+            <h2 style="margin-top: 30px;">創作工具</h2>
+            <div id="tools-container">
+                <button id="start-record-btn">開始錄影</button>
+                <button id="stop-record-btn">停止並儲存</button>
+                <button id="screenshot-btn">截圖並儲存</button>
+            </div>
+            <p id="recorder-info" class="info-text"></p>
+            
+            <h2 style="margin-top: 30px;">探索服務留言</h2>
+            <form id="inquiry-form" name="service-inquiry" data-netlify="true">
+                <div class="form-field">
+                    <label for="inquiry-name">您的姓名 (自動帶入)</label>
+                    <input type="text" id="inquiry-name" name="inquiry-name" readonly>
+                </div>
+                <div class="form-field">
+                    <label for="inquiry-phone">您的電話 (自動帶入)</label>
+                    <input type="tel" id="inquiry-phone" name="inquiry-phone" readonly>
+                </div>
+                 <div class="form-field">
+                    <label>您的稱謂 (自動帶入)</label>
+                    <div class="form-field-radio" id="inquiry-title-container"></div>
+                </div>
+                <div class="form-field">
+                    <label for="inquiry-message">您的留言</label>
+                    <textarea id="inquiry-message" name="inquiry-message" placeholder="我想進一步了解..." required></textarea>
+                </div>
+                <button type="submit">送出洽詢</button>
+            </form>
+            
+        </div>
+
+        <div id="output-container">
+            <canvas id="art-canvas"></canvas>
+        </div>
+    </div>
+    
+    <audio id="bg-music" loop></audio>
+
+    <script>
+        // ======== 1. 資料庫 ( **音樂檔名修改** ) ========
+        // **修改：** musicUrl 已更新為 01.mp3, 02.mp3 ...
+        const personalityData = [
+            { id: "leader", name: "01 領導者 (Leader)", color: "#FF0000", musicUrl: "music/01.mp3" },
+            { id: "collaborator", name: "02 合作者 (Collaborator)", color: "#FF6200", musicUrl: "music/02.mp3" },
+            { id: "creator", name: "03 創意者 (Creator)", color: "#FFB005", musicUrl: "music/03.mp3" },
+            { id: "implementer", name: "04 實踐者 (Implementer)", color: "#489103", musicUrl: "music/04.mp3" },
+            { id: "adventurer", name: "05 冒險者 (Adventurer)", color: "#0559AD", musicUrl: "music/05.mp3" },
+            { id: "guardian", name: "06 守護者 (Guardian)", color: "#1E0369", musicUrl: "music/06.mp3" },
+            { id: "explorer", name: "07 探索者 (Explorer)", color: "#650280", musicUrl: "music/07.mp3" },
+            { id: "achiever", name: "08 成就者 (Achiever)", color: "#DE8909", musicUrl: "music/08.mp3" },
+            { id: "idealist", name: "09 理想者 (Idealist)", color: "#FAE171", musicUrl: "music/09.mp3" },
+            { id: "inspirator", name: "10 靈感者 (Inspirator)", color: "#E3E4E6", musicUrl: "music/10.mp3" },
+            { id: "architect", name: "11 建築大師 (Architect)", color: "#692C00", musicUrl: "music/11.mp3" },
+            { id: "mentor", name: "12 靈魂導師 (Soul Mentor)", color: "#FFFACD", musicUrl: "music/12.mp3" }
+        ];
+
+        // ======== 2. 抓取 DOM 元素 (不變) ========
+        const elements = {
+            userInfoModal: document.getElementById('user-info-modal'),
+            userInfoForm: document.getElementById('user-info-form'),
+            mainContent: document.getElementById('main-content'),
+            userName: document.getElementById('user-name'),
+            userPhone: document.getElementById('user-phone'),
+            selects: { top: document.getElementById('select-top'), mid: document.getElementById('select-mid'), base: document.getElementById('select-base') },
+            sliders: { top: document.getElementById('slider-top'), mid: document.getElementById('slider-mid'), base: document.getElementById('slider-base') },
+            values: { top: document.getElementById('value-top'), mid: document.getElementById('value-mid'), base: document.getElementById('value-base') },
+            params: { color: document.getElementById('slider-color'), spray: document.getElementById('slider-spray'), halo: document.getElementById('slider-halo') },
+            generateBtn: document.getElementById('generate-btn'),
+            artCanvas: document.getElementById('art-canvas'),
+            startRecordBtn: document.getElementById('start-record-btn'),
+            stopRecordBtn: document.getElementById('stop-record-btn'),
+            screenshotBtn: document.getElementById('screenshot-btn'),
+            infoText: document.getElementById('recorder-info'),
+            audioPlayer: document.getElementById('bg-music'),
+            inquiryForm: document.getElementById('inquiry-form'),
+            inquiryName: document.getElementById('inquiry-name'),
+            inquiryPhone: document.getElementById('inquiry-phone'),
+            inquiryTitleContainer: document.getElementById('inquiry-title-container'),
+            inquiryMessage: document.getElementById('inquiry-message')
+        };
+        
+        // Canvas (不變)
+        const canvas = elements.artCanvas;
+        const ctx = canvas.getContext('2d');
+        canvas.width = 500;
+        canvas.height = 500;
+
+        // 系統變數 (不變)
+        let particlesArray = [];
+        let animationFrameId = null;
+        let mediaRecorder;
+        let recordedChunks = [];
+        let videoSettings = {};
+        let userInfo = {};
+
+        // (下拉選單和拉桿的陣列，不變)
+        const allSelects = [elements.selects.top, elements.selects.mid, elements.selects.base];
+        const allSliders = [elements.sliders.top, elements.sliders.mid, elements.sliders.base];
+        const allValues = [elements.values.top, elements.values.mid, elements.values.base];
+
+        // ======== 3. 核心邏輯 (邏輯 A, B, C 不變) ========
+        function populateSelects() {
+            let optionsHtml = '';
+            personalityData.forEach(p => {
+                optionsHtml += `<option value="${p.id}">${p.name}</option>`;
+            });
+            allSelects.forEach((select, index) => {
+                select.innerHTML = optionsHtml;
+                select.selectedIndex = index; 
+            });
+        }
+        function handleDropdownChange() {
+            const selectedValues = allSelects.map(select => select.value);
+            allSelects.forEach(select => {
+                Array.from(select.options).forEach(option => {
+                    const isSelectedElsewhere = selectedValues.includes(option.value);
+                    const isSelf = option.value === select.value;
+                    option.disabled = (isSelectedElsewhere && !isSelf);
+                });
+            });
+        }
+        function handleSliderChange(changedSlider) {
+            let total = 0;
+            allSliders.forEach(slider => total += parseInt(slider.value));
+            let excess = total - 100;
+            if (excess > 0) {
+                const otherSliders = allSliders.filter(s => s !== changedSlider);
+                otherSliders.sort((a, b) => parseInt(b.value) - parseInt(a.value));
+                for (let slider of otherSliders) {
+                    if (excess === 0) break;
+                    let currentValue = parseInt(slider.value);
+                    let reduction = Math.min(currentValue, excess);
+                    slider.value = currentValue - reduction;
+                    excess -= reduction;
+                }
+            }
+
+            total = 0;
