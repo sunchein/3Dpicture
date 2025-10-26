@@ -212,7 +212,7 @@
             font-family: inherit;
         }
         #inquiry-form button {
-            background-color: #ff6a00; /* 洽詢用橘色 */
+            background-color: #ff6a00;
         }
         #inquiry-form button:hover {
             background-color: #e05c00;
@@ -234,6 +234,8 @@
 
     <div id="user-info-modal">
         <form id="user-info-form" name="visitor-login" data-netlify="true">
+            <input type="hidden" name="form-name" value="visitor-login" />
+            
             <h2>香氛人格 藝術創作</h2>
             <div class="form-field">
                 <label for="user-name">您的姓名</label>
@@ -308,6 +310,8 @@
             
             <h2 style="margin-top: 30px;">探索服務留言</h2>
             <form id="inquiry-form" name="service-inquiry" data-netlify="true">
+                <input type="hidden" name="form-name" value="service-inquiry" />
+                
                 <div class="form-field">
                     <label for="inquiry-name">您的姓名 (自動帶入)</label>
                     <input type="text" id="inquiry-name" name="inquiry-name" readonly>
@@ -337,8 +341,7 @@
     <audio id="bg-music" loop></audio>
 
     <script>
-        // ======== 1. 資料庫 ( **音樂檔名修改** ) ========
-        // **修改：** musicUrl 已更新為 01.mp3, 02.mp3 ...
+        // ======== 1. 資料庫 (音樂檔名 `01.mp3` ... ) ========
         const personalityData = [
             { id: "leader", name: "01 領導者 (Leader)", color: "#FF0000", musicUrl: "music/01.mp3" },
             { id: "collaborator", name: "02 合作者 (Collaborator)", color: "#FF6200", musicUrl: "music/02.mp3" },
@@ -434,5 +437,277 @@
                     excess -= reduction;
                 }
             }
-
             total = 0;
+            allSliders.forEach(slider => total += parseInt(slider.value));
+            let deficit = 100 - total;
+            if (deficit > 0) {
+                const otherSlider = allSliders.find(s => s !== changedSlider);
+                otherSlider.value = parseInt(otherSlider.value) + deficit;
+            }
+            allSliders.forEach((slider, index) => {
+                allValues[index].textContent = `${slider.value}%`;
+            });
+        }
+        
+        // ======== 4. 粒子系統邏輯 (不變) ========
+        class Particle {
+            constructor(x, y, color, baseOpacity) {
+                this.x = x; this.y = y; this.color = color;
+                this.size = Math.random() * 3 + 1;
+                this.opacity = (Math.random() * 0.5 + 0.5) * (baseOpacity / 200);
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.life = 1;
+                this.decay = Math.random() * 0.01 + 0.005;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy; this.life -= this.decay;
+                if (this.life <= 0 || this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.globalAlpha = Math.max(0, this.life * this.opacity);
+                ctx.fillStyle = this.color;
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            reset() {
+                this.x = canvas.width / 2; this.y = canvas.height / 2;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.life = 1;
+            }
+        }
+        function generateArt() {
+            if (animationFrameId) { cancelAnimationFrame(animationFrameId); }
+            particlesArray = [];
+            const settings = {
+                personalities: [
+                    { id: elements.selects.top.value, percent: parseInt(elements.sliders.top.value) },
+                    { id: elements.selects.mid.value, percent: parseInt(elements.sliders.mid.value) },
+                    { id: elements.selects.base.value, percent: parseInt(elements.sliders.base.value) }
+                ],
+                baseOpacity: parseInt(elements.params.color.value),
+                particleCount: parseInt(elements.params.spray.value) * 100,
+                halo: parseInt(elements.params.halo.value) 
+            };
+            for (let i = 0; i < settings.particleCount; i++) {
+                const rand = Math.random() * 100;
+                let personality;
+                if (rand < settings.personalities[0].percent) { personality = settings.personalities[0]; }
+                else if (rand < settings.personalities[0].percent + settings.personalities[1].percent) { personality = settings.personalities[1]; }
+                else { personality = settings.personalities[2]; }
+                const color = personalityData.find(p => p.id === personality.id).color;
+                particlesArray.push(new Particle(canvas.width / 2, canvas.height / 2, color, settings.baseOpacity));
+            }
+            animate(settings);
+        }
+        function animate(settings) {
+            ctx.globalAlpha = 0.1; ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.shadowBlur = settings.halo / 2;
+            for (let i = 0; i < particlesArray.length; i++) {
+                ctx.shadowColor = particlesArray[i].color;
+                particlesArray[i].update();
+                particlesArray[i].draw();
+            }
+            ctx.shadowBlur = 0;
+            animationFrameId = requestAnimationFrame(() => animate(settings));
+        }
+
+        // ======== 5. 錄影與截圖功能 (不變) ========
+        function startRecording() {
+            console.log("開始錄影...");
+            recordedChunks = [];
+            if (MediaRecorder.isTypeSupported('video/mp4; codecs=avc1')) {
+                videoSettings.mimeType = 'video/mp4; codecs=avc1';
+                videoSettings.fileExtension = 'mp4';
+                elements.infoText.innerHTML = "ℹ️ 您的瀏覽器支援MP4。正在錄製為 <strong>.mp4</strong> 檔案。";
+            } else {
+                videoSettings.mimeType = 'video/webm; codecs=vp9';
+                videoSettings.fileExtension = 'webm';
+                elements.infoText.innerHTML = "ℹ️ 您的瀏覽器不支援MP4，已錄製為 <strong>.webm</strong>。<br>推薦使用 <a href='https://www.videolan.org/vlc/' target='_blank'>VLC Player</a> 播放。";
+            }
+            const stream = canvas.captureStream(30);
+            try {
+                mediaRecorder = new MediaRecorder(stream, { mimeType: videoSettings.mimeType });
+            } catch (e) {
+                console.error("MediaRecorder 初始化失敗:", e);
+                elements.infoText.innerHTML = "❌ 錄影初始化失敗。瀏覽器不支援所選格式。";
+                return;
+            }
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) { recordedChunks.push(event.data); }
+            };
+            mediaRecorder.onstop = saveRecording;
+            mediaRecorder.start();
+            elements.startRecordBtn.disabled = true;
+            elements.stopRecordBtn.disabled = false;
+            elements.startRecordBtn.style.backgroundColor = '#444';
+            elements.stopRecordBtn.style.backgroundColor = '#DC3545';
+        }
+        function stopRecording() {
+            console.log("停止錄影...");
+            if (mediaRecorder) { mediaRecorder.stop(); }
+            elements.startRecordBtn.disabled = false;
+            elements.stopRecordBtn.disabled = true;
+            elements.startRecordBtn.style.backgroundColor = '#DC3545';
+            elements.stopRecordBtn.style.backgroundColor = '#444';
+            elements.infoText.innerHTML = "";
+        }
+        function saveRecording() {
+            console.log("儲存錄影中...");
+            if (recordedChunks.length === 0) { return; }
+            const blob = new Blob(recordedChunks, { type: videoSettings.mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+            a.href = url;
+            a.download = `香氛人格_錄影.${videoSettings.fileExtension}`; 
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+        function takeScreenshot() {
+            console.log("截圖...");
+            const dataURL = canvas.toDataURL("image/png");
+            const a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+            a.href = dataURL;
+            a.download = "香氛人格_截圖.png";
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // ======== 6. 訪客登錄、音樂、洽詢 功能 (使用 Netlify 提交) ========
+
+        /**
+         * 功能 E: 處理訪客登錄 (已修改為 Netlify AJAX 提交)
+         * - (mailto: 已移除)
+         * - (fetch: 已正確設定)
+         */
+        async function handleUserFormSubmit(event) {
+            event.preventDefault(); // 阻止表單跳轉
+
+            // 1. 準備 Netlify 提交用的資料
+            const formData = new FormData(elements.userInfoForm);
+            
+            try {
+                // 2. 在背景提交表單到 Netlify
+                await fetch("/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams(formData).toString()
+                });
+
+                // 3. (提交成功後) 執行您原本的邏輯
+                console.log("訪客登錄資料已提交至 Netlify");
+                
+                // 儲存訪客資料
+                userInfo.name = elements.userName.value;
+                userInfo.phone = elements.userPhone.value;
+                userInfo.title = document.querySelector('input[name="user-title"]:checked').value;
+                
+                // 自動預填洽詢表單
+                elements.inquiryName.value = userInfo.name;
+                elements.inquiryPhone.value = userInfo.phone;
+                elements.inquiryTitleContainer.innerHTML = `
+                    <label><input type="radio" name="inquiry-title" value="先生" ${userInfo.title === '先生' ? 'checked' : ''} disabled> 先生</label>
+                    <label><input type="radio" name="inquiry-title" value="小姐" ${userInfo.title === '小姐' ? 'checked' : ''} disabled> 小姐</label>
+                `;
+                
+                // 隱藏 Modal，顯示主內容
+                elements.userInfoModal.style.display = 'none';
+                elements.mainContent.style.display = 'flex';
+                
+                // 初始化 APP 內容
+                populateSelects();
+                handleDropdownChange();
+                generateArt(); // 產生第一次的藝術畫
+                
+                // 播放音樂
+                updateMusic();
+                elements.audioPlayer.play().catch(e => console.warn("音樂自動播放被阻擋:", e));
+
+            } catch (error) {
+                console.error("Netlify 登錄表單提交失敗:", error);
+                alert("抱歉，登錄時發生錯誤，請重新整理頁面。");
+            }
+        }
+        
+        /**
+         * 功能 F: 更新背景音樂 (不變)
+         */
+        function updateMusic() {
+            const selectedId = elements.selects.top.value; // 以前調為主
+            const personality = personalityData.find(p => p.id === selectedId);
+            
+            if (personality && personality.musicUrl) {
+                console.log("播放音樂:", personality.musicUrl);
+                elements.audioPlayer.src = personality.musicUrl;
+                elements.audioPlayer.play().catch(e => console.warn("音樂自動播放被阻擋:", e));
+            }
+        }
+        
+        /**
+         * 功能 G: 處理洽詢表單 (已修改為 Netlify AJAX 提交)
+         * - (mailto: 已移除)
+         * - (fetch: 已正確設定)
+         */
+        async function handleInquirySubmit(event) {
+            event.preventDefault(); // 阻止表單跳轉
+
+            // 1. 準備 Netlify 提交用的資料
+            const formData = new FormData(elements.inquiryForm);
+            formData.append('inquiry-title', userInfo.title); // 手動加入 disabled 的資料
+
+            try {
+                // 2. 在背景提交表單到 Netlify
+                await fetch("/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams(formData).toString()
+                });
+
+                // 3. (提交成功後) 執行您原本的邏輯
+                console.log("洽詢表單已提交至 Netlify");
+                alert("感謝您的留言，我們已成功收到您的洽詢！");
+                elements.inquiryMessage.value = ""; // 清空留言框
+
+            } catch (error) {
+                console.error("Netlify 洽詢表單提交失敗:", error);
+                alert("抱歉，訊息發送失敗，請稍後再試。");
+            }
+        }
+
+
+        // ======== 7. 綁定事件監聽器 (不變) ========
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            elements.userInfoForm.addEventListener('submit', handleUserFormSubmit);
+            elements.stopRecordBtn.disabled = true; 
+            elements.infoText.innerHTML = "";
+            
+            allSelects.forEach(select => {
+                select.addEventListener('change', handleDropdownChange);
+            });
+            allSliders.forEach(slider => {
+                slider.addEventListener('input', () => handleSliderChange(slider));
+            });
+            elements.generateBtn.addEventListener('click', generateArt);
+            
+            elements.startRecordBtn.addEventListener('click', startRecording);
+            elements.stopRecordBtn.addEventListener('click', stopRecording);
+            elements.screenshotBtn.addEventListener('click', takeScreenshot);
+            
+            elements.selects.top.addEventListener('change', updateMusic);
+            
+            elements.inquiryForm.addEventListener('submit', handleInquirySubmit);
+        });
+    </script>
+</body>
+</html>
