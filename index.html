@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>香氛人格 藝術創作平台</title>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- 
+      * 【修改 1/4】
+      * 移除了 html2pdf.js 的 <script> 載入
+    -->
     
     <style>
         /* --- 基礎樣式 --- */
@@ -232,7 +235,7 @@
             font-size: 1rem;
         }
         
-        /* --- PDF 報告按鈕 --- */
+        /* --- 報告按鈕 --- */
         #report-btn {
             background-color: #ff6a00; /* 醒目的橘色 */
             grid-column: 1 / -1; /* 佔滿整行 */
@@ -241,76 +244,18 @@
             background-color: #e05c00;
         }
         
-        /* * --- PDF 報告模板 (隱藏) ---
-         * 【版面修正 1/2】
-         * 將 padding 從 20mm 修改為 12mm (1.2cm)，
-         * 這將是 PDF 四周的留白。
+        /* * --- PDF 報告模板 (移除) --- 
+         * 我們不再需要 #report-template 的 CSS，因為樣式會直接寫入新分頁
         */
-        #report-template {
-            display: none; /* 預設隱藏 */
-            width: 210mm; /* A4 寬度 */
-            padding: 12mm; /* A4 邊界 (1.2cm) */
-            box-sizing: border-box;
-            color: #000; /* PDF 內文用黑色 */
-            background: #fff;
-            font-family: 'Times New Roman', 'KaiTi', '標楷體', serif;
-        }
-        #report-template h1 {
-            font-size: 24pt;
-            color: #222;
-            border-bottom: 2px solid #ff6a00;
-            padding-bottom: 10px;
-            text-align: center;
-        }
-        #report-template h2 {
-            font-size: 18pt;
-            color: #ff6a00;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
-            margin-top: 25px;
-        }
-        #report-template h3 {
-            font-size: 14pt;
-            color: #333;
-            font-weight: bold;
-            margin-top: 15px;
-        }
-        #report-template p {
-            font-size: 12pt;
-            line-height: 1.7;
-            text-align: justify;
-            margin-bottom: 15px; /* 增加段落間距 */
-        }
-        #report-template .user-info {
-            font-size: 11pt;
-            color: #555;
-            background: #f4f4f4;
-            padding: 15px;
-            border-radius: 5px;
-        }
-        #report-template .formula-box {
-            font-size: 12pt;
-            color: #000;
-            background: #fff9f2;
-            border: 1px solid #ff6a00;
-            padding: 20px;
-            border-radius: 5px;
-            margin-top: 20px;
-            text-align: center;
-        }
-        #report-template .footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 10pt;
-            color: #999;
-        }
         
     </style>
 </head>
 <body>
 
+    <!-- 訪客登錄 Modal -->
     <div id="user-info-modal">
         <form id="user-info-form" name="visitor-login" data-netlify="true">
+            <!-- Netlify 隱藏欄位 -->
             <input type="hidden" name="form-name" value="visitor-login" />
             
             <h2>香氛人格 藝術創作</h2>
@@ -333,9 +278,12 @@
         </form>
     </div>
 
+    <!-- 主內容 (預設隱藏) -->
     <div id="main-content">
+        <!-- ======== 控制面板 ======== -->
         <div id="controls">
             <h2>香氛人格設定</h2>
+            <!-- 前/中/後調 (結構不變) -->
             <div class="control-group">
                 <h3>前調 (Top Note)</h3>
                 <select id="select-top" class="personality-select"></select>
@@ -361,6 +309,7 @@
                 </div>
             </div>
             
+            <!-- 全域參數 (結構不變) -->
             <h2>全域參數</h2>
             <div class="control-group">
                 <label for="slider-color">顏色強度 (Color Intensity)</label>
@@ -375,19 +324,24 @@
                 <input type="range" id="slider-halo" min="0" max="100" value="30">
             </div>
             
-            <button id="generate-btn">重新生成粒子</button>
+            <!-- 生成按鈕 -->
+            <button id="generate-btn">生成香氛藝術創作</button>
             
+            <!-- 創作工具 -->
             <h2 style="margin-top: 30px;">創作工具</h2>
             <div id="tools-container">
                 <button id="start-record-btn">開始錄影</button>
                 <button id="stop-record-btn">停止並儲存</button>
                 <button id="screenshot-btn">截圖並儲存</button>
+                <!-- 報告按鈕 -->
                 <button id="report-btn">產生您的香氛人格報告</button>
             </div>
             <p id="recorder-info" class="info-text"></p>
             
+            <!-- 服務洽詢表單 -->
             <h2 style="margin-top: 30px;">探索服務留言</h2>
             <form id="inquiry-form" name="service-inquiry" data-netlify="true">
+                <!-- Netlify 隱藏欄位 -->
                 <input type="hidden" name="form-name" value="service-inquiry" />
                 
                 <div class="form-field">
@@ -411,27 +365,19 @@
             
         </div>
 
+        <!-- ======== 藝術畫布 (不變) ======== -->
         <div id="output-container">
             <canvas id="art-canvas"></canvas>
         </div>
     </div>
     
+    <!-- 背景音樂播放器 -->
     <audio id="bg-music" loop></audio>
 
-    <div id="report-template">
-        <h1>您的專屬香氛人格分析報告</h1>
-        <div class="user-info">
-            <p><strong>致：</strong> <span id="report-user-name"></span></S%pan></p>
-            <p><strong>人格配方：</strong> <span id="report-formula"></span></p>
-            <p><strong>報告日期：</strong> <span id="report-date"></span></p>
-        </div>
-        <div id="report-content"></div>
-        <div class="footer">
-            <p>此報告由 3D 香氛藝術 (3dfragranceart) 平台生成</p>
-            <p>&copy; 2025 版權所有</p>
-        </div>
-    </div>
-
+    <!-- 
+      * 【修改 2/4】
+      * 移除了 #report-template 的 div 
+    -->
 
     <script>
         // ======== 1. 資料庫 (不變) ========
@@ -644,7 +590,7 @@
                     },
                     {
                         title: "事業與情感",
-                        content: "在事業上,您是頂尖的業務、企業家、專案領袖、運動員。您在有明確目標與獎勵的環境中表現最好。您是結果導向的。但您必須避免「贏了面子，輸了裡子」,要多關心團隊成員的情緒。在情感關係中,您會用「創造更好的物質生活」來表達愛。您是可靠的。但您也需要學習「放下手機」,專心地陪伴伴侶,提供「情緒價值」,而不只是「物質價值」。"
+                        content: "在事業上,您是頂尖的業務、企業家、專案領袖、運動員。您在有明確目標與獎勵的環境中表現最好。您是結果導向的。但您必須避免「贏了面子,輸了裡子」,要多關心團隊成員的情緒。在情感關係中,您會用「創造更好的物質生活」來表達愛。您是可靠的。但您也需要學習「放下手機」,專心地陪伴伴侶,提供「情緒價值」,而不只是「物質價值」。"
                     }
                 ]
             },
@@ -771,13 +717,15 @@
             inquiryTitleContainer: document.getElementById('inquiry-title-container'),
             inquiryMessage: document.getElementById('inquiry-message'),
 
-            // 報告按鈕和模板
+            // 報告按鈕
             reportBtn: document.getElementById('report-btn'),
-            reportTemplate: document.getElementById('report-template'),
-            reportUserName: document.getElementById('report-user-name'),
-            reportFormula: document.getElementById('report-formula'),
-            reportDate: document.getElementById('report-date'),
-            reportContent: document.getElementById('report-content')
+            
+            // 【修改 3/4】移除報告模板相關元素
+            // reportTemplate: document.getElementById('report-template'),
+            // reportUserName: document.getElementById('report-user-name'),
+            // reportFormula: document.getElementById('report-formula'),
+            // reportDate: document.getElementById('report-date'),
+            // reportContent: document.getElementById('report-content')
         };
         
         // Canvas (不變)
@@ -1053,13 +1001,103 @@
 
         /*
          * ======================================================================
-         * 【AI 報告生成引擎】(已修正 PDF 邊界)
+         * 【修改 4/4】AI 報告生成引擎 (改為開啟新分頁)
+         * - 移除了所有 html2pdf.js 相關程式碼。
+         * - 新增了 reportPageStyles CSS 字串。
+         * - generatePDFReport 函數現在會動態建立完整 HTML 並寫入新分頁。
          * ======================================================================
         */
-        function generatePDFReport() {
-            console.log("開始產生 AI 報告...");
+        
+        // 新增：用於新分頁報告的 CSS 樣式
+        const reportPageStyles = `
+            body {
+                font-family: 'Times New Roman', 'KaiTi', '標楷體', serif;
+                margin: 0;
+                padding: 12mm; /* A4 邊界 (1.2cm) */
+                background-color: #fff;
+                color: #000;
+            }
+            .print-instructions {
+                background-color: #fff9e6;
+                border: 1px solid #ffcc80;
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 5px;
+                text-align: center;
+                font-size: 11pt;
+            }
+            .print-instructions button {
+                 padding: 8px 15px;
+                 font-size: 10pt;
+                 background-color: #ff6a00;
+                 color: white;
+                 border: none;
+                 border-radius: 4px;
+                 cursor: pointer;
+            }
+            h1 {
+                font-size: 24pt;
+                color: #222;
+                border-bottom: 2px solid #ff6a00;
+                padding-bottom: 10px;
+                text-align: center;
+                margin-top: 0;
+            }
+            h2 {
+                font-size: 18pt;
+                color: #ff6a00;
+                border-bottom: 1px solid #ccc;
+                padding-bottom: 5px;
+                margin-top: 25px;
+            }
+            h3 {
+                font-size: 14pt;
+                color: #333;
+                font-weight: bold;
+                margin-top: 15px;
+            }
+            p {
+                font-size: 12pt;
+                line-height: 1.7;
+                text-align: justify;
+                margin-bottom: 15px; /* 增加段落間距 */
+            }
+            .user-info {
+                font-size: 11pt;
+                color: #555;
+                background: #f4f4f4;
+                padding: 15px;
+                border-radius: 5px;
+            }
+            .formula-box {
+                font-size: 12pt;
+                color: #000;
+                background: #fff9f2;
+                border: 1px solid #ff6a00;
+                padding: 20px;
+                border-radius: 5px;
+                margin-top: 20px;
+                text-align: center;
+            }
+            .footer {
+                margin-top: 40px;
+                text-align: center;
+                font-size: 10pt;
+                color: #999;
+            }
+            /* 列印時隱藏提示 */
+            @media print {
+                .print-instructions {
+                    display: none;
+                }
+            }
+        `;
 
-            // 1. 獲取三種人格的資料，並轉為物件陣列
+        // 【修改】generatePDFReport 函數 -> generateReportPage
+        function generateReportPage() {
+            console.log("開始產生報告頁面...");
+
+            // 1. 獲取三種人格的資料 (不變)
             const notes = [
                 {
                     id: elements.selects.top.value,
@@ -1081,30 +1119,25 @@
                 }
             ];
 
-            // 2. 【核心】根據百分比排序，指派「人格角色」
+            // 2. 根據百分比排序，指派「人格角色」(不變)
             const sortedNotes = notes.sort((a, b) => b.percent - a.percent);
             const dominantNote = sortedNotes[0];
             const supportiveNote = sortedNotes[1];
             const foundationNote = sortedNotes[2];
 
-            // 3. 獲取三種角色的「深度 AI 分析」
+            // 3. 獲取三種角色的「深度 AI 分析」(不變)
             const dominantInsight = personalityInsights[dominantNote.id];
             const supportiveInsight = personalityInsights[supportiveNote.id];
             const foundationInsight = personalityInsights[foundationNote.id];
 
-            // 4. 填入報告模板的「表頭」
-            elements.reportUserName.textContent = `${userInfo.name} ${userInfo.title}`;
+            // 4. 動態組合報告的「核心內容 HTML」(不變)
+            let reportContentHTML = "";
             const formulaText = `${dominantNote.percent}% ${dominantInsight.title} (${dominantNote.originalNote}) + \
                                ${supportiveNote.percent}% ${supportiveInsight.title} (${supportiveNote.originalNote}) + \
                                ${foundationNote.percent}% ${foundationInsight.title} (${foundationNote.originalNote})`;
-            elements.reportFormula.textContent = formulaText;
-            elements.reportDate.textContent = new Date().toLocaleDateString('zh-TW');
-
-            // 5. 動態組合報告的「核心內容」
-            let reportHTML = "";
-
-            // --- 5.1 總結與配方 ---
-            reportHTML += `
+            
+            // --- 總結與配方 ---
+            reportContentHTML += `
                 <h2>您的靈魂藍圖：完美總和解說</h2>
                 <p>親愛的 ${userInfo.name}，您此次的香氛人格配方，揭示了您當下獨一無二的心靈狀態。這不是一個靜態的標籤，而是一個動態的能量組合：</p>
                 <p>您的「核心自我」由 <strong>${dominantNote.percent}% 的 ${dominantInsight.title}</strong> 作為**主導特質**。這決定了您向外展現的主要樣貌、您的核心優勢與此生最關鍵的課題。</p>
@@ -1118,81 +1151,78 @@
                     <p>這份報告將協助您深入理解這個配方中蘊含的智慧。請您在生活中，時常冥想這三種人格的香氣與色彩，它們將是您全面昇華、平衡身心的最佳引導。</p>
                 </div>
             `;
-
-            // --- 5.2 主導特質分析 ---
-            reportHTML += `
+            // --- 主導特質分析 ---
+            reportContentHTML += `
                 <h2>您的主導特質 (${dominantNote.percent}%): ${dominantInsight.title}</h2>
-                <p><i>「${dominantInsight.tagline}」</i></p>
-                <h3>核心優勢：${dominantInsight.analysis[0].title}</h3>
-                <p>${dominantInsight.analysis[0].content}</p>
-                <h3>深度課題：${dominantInsight.analysis[1].title}</h3>
-                <p>${dominantInsight.analysis[1].content}</p>
-                <h3>靈性揚升之路：${dominantInsight.analysis[2].title}</h3>
-                <p>${dominantInsight.analysis[2].content}</p>
-                <h3>事業與情感：${dominantInsight.analysis[3].title}</h3>
-                <p>${dominantInsight.analysis[3].content}</p>
-            `;
-
-            // --- 5.3 輔助特質分析 ---
-            reportHTML += `
+                <p><i>「${dominantInsight.tagline}」</i></p>`;
+            dominantInsight.analysis.forEach(section => {
+                reportContentHTML += `<h3>${section.title}</h3><p>${section.content}</p>`;
+            });
+            // --- 輔助特質分析 ---
+            reportContentHTML += `
                 <h2>您的輔助特質 (${supportiveNote.percent}%): ${supportiveInsight.title}</h2>
                 <p><i>「${supportiveInsight.tagline}」</i></p>
-                <p>這股力量是您達成「${dominantInsight.title}」使命所使用的「方法」。它以 ${supportiveNote.percent}% 的比例，溫和地輔助您的核心自我。</p>
-                <h3>核心優勢：${supportiveInsight.analysis[0].title}</h3>
-                <p>${supportiveInsight.analysis[0].content}</p>
-                <h3>深度課題：${supportiveInsight.analysis[1].title}</h3>
-                <p>${supportiveInsight.analysis[1].content}</p>
-                <h3>靈性揚升之路：${supportiveInsight.analysis[2].title}</h3>
-                <p>${supportiveInsight.analysis[2].content}</p>
-            `;
-
-            // --- 5.4 根基特質分析 ---
-            reportHTML += `
+                <p>這股力量是您達成「${dominantInsight.title}」使命所使用的「方法」。它以 ${supportiveNote.percent}% 的比例，溫和地輔助您的核心自我。</p>`;
+            supportiveInsight.analysis.forEach(section => {
+                reportContentHTML += `<h3>${section.title}</h3><p>${section.content}</p>`;
+            });
+            // --- 根基特質分析 ---
+            reportContentHTML += `
                 <h2>您的根基特質 (${foundationNote.percent}%): ${foundationInsight.title}</h2>
                 <p><i>「${foundationInsight.tagline}」</i></p>
-                <p>這股力量是您人格的「潛意識根基」。它以 ${foundationNote.percent}% 的比例，在底層默默地支持或牽引著您。滋養這股根基能量，能為您帶來意想不到的內在平靜與力量。</p>
-                <h3>核心優勢：${foundationInsight.analysis[0].title}</h3>
-                <p>${foundationInsight.analysis[0].content}</p>
-                <h3>深度課題：${foundationInsight.analysis[1].title}</h3>
-                <p>${foundationInsight.analysis[1].content}</p>
-                <h3>靈性揚升之路：${foundationInsight.analysis[2].title}</h3>
-                <p>${foundationInsight.analysis[2].content}</p>
+                <p>這股力量是您人格的「潛意識根基」。它以 ${foundationNote.percent}% 的比例，在底層默默地支持或牽引著您。滋養這股根基能量，能為您帶來意想不到的內在平靜與力量。</p>`;
+            foundationInsight.analysis.forEach(section => {
+                reportContentHTML += `<h3>${section.title}</h3><p>${section.content}</p>`;
+            });
+
+            // 5. 【修改】建立新分頁的完整 HTML
+            const reportFullHTML = `
+                <!DOCTYPE html>
+                <html lang="zh-Hant">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${userInfo.name} 的香氛人格報告</title>
+                    <style>${reportPageStyles}</style>
+                </head>
+                <body>
+                    <div class="print-instructions">
+                        💡 如何儲存報告：請使用瀏覽器的「列印」功能 (Ctrl+P 或 Cmd+P)，並在目的地選擇「另存為 PDF」。
+                        <button onclick="window.print()">立即列印 / 儲存 PDF</button>
+                    </div>
+
+                    <h1>您的專屬香氛人格分析報告</h1>
+                    
+                    <div class="user-info">
+                        <p><strong>致：</strong> ${userInfo.name} ${userInfo.title}</p>
+                        <p><strong>人格配方：</strong> ${formulaText}</p>
+                        <p><strong>報告日期：</strong> ${new Date().toLocaleDateString('zh-TW')}</p>
+                    </div>
+
+                    ${reportContentHTML} 
+
+                    <div class="footer">
+                        <p>此報告由 3D 香氛藝術 (3dfragranceart) 平台生成</p>
+                        <p>&copy; 2025 版權所有</p>
+                    </div>
+                </body>
+                </html>
             `;
 
-            elements.reportContent.innerHTML = reportHTML;
+            // 6. 【修改】開啟新分頁並寫入 HTML
+            const reportWindow = window.open('', '_blank');
+            if (reportWindow) {
+                reportWindow.document.open();
+                reportWindow.document.write(reportFullHTML);
+                reportWindow.document.close();
+                console.log("報告已在新分頁開啟！");
+            } else {
+                alert("無法開啟新分頁，請檢查您的瀏覽器是否阻擋了彈出視窗。");
+            }
 
-            // 6. 使用 html2pdf.js 生成並下載 PDF
-            const reportElement = elements.reportTemplate;
-            reportElement.style.display = 'block'; // 必須暫時顯示才能被讀取
-
-            /*
-             * 【版面修正 2/2】
-             * 將 margin 從 [15,15,15,15] 修改為 0。
-             * PDF 的邊界現在完全由 CSS 的 padding: 12mm; 控制。
-            */
-            const opt = {
-                margin:       0, // 讓 CSS padding 控制邊界
-                filename:     `${userInfo.name}_香氛人格報告.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-            };
-
-            // 顯示一個 "正在生成" 的提示
-            elements.reportBtn.disabled = true;
-            elements.reportBtn.textContent = "報告生成中，請稍候...";
-
-            html2pdf().from(reportElement).set(opt).save().then(() => {
-                // 完成後恢復
-                reportElement.style.display = 'none'; // 再次隱藏
-                elements.reportBtn.disabled = false;
-                elements.reportBtn.textContent = "產生您的香氛人格報告";
-                console.log("PDF 報告已成功生成並下載！");
-            });
+            // (移除 pdf 生成相關的按鈕狀態改變)
         }
 
-        // ======== 7. 綁定事件監聽器 (不變) ========
+        // ======== 7. 綁定事件監聽器 (修改 Report 按鈕綁定) ========
         document.addEventListener('DOMContentLoaded', () => {
             
             elements.userInfoForm.addEventListener('submit', handleUserFormSubmit);
@@ -1215,9 +1245,10 @@
             
             elements.inquiryForm.addEventListener('submit', handleInquirySubmit);
 
-            // 綁定新的報告按鈕
-            elements.reportBtn.addEventListener('click', generatePDFReport);
+            // **【修改】** 綁定新的報告函數
+            elements.reportBtn.addEventListener('click', generateReportPage);
         });
     </script>
 </body>
 </html>
+
